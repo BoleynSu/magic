@@ -14,9 +14,15 @@ class network {
   vector<mat> weights;
 
   static mt19937 rand;
-  static double sigmoid(double x) { return 1. / (1. + exp(-x)); }
+  static double sigmoid(double x) {
+    return 1. / (1. + exp(-x));
+  }
   static double sigmoid_prime(double x) {
     return sigmoid(x) * (1. - sigmoid(x));
+  }
+  static vec cost_derivative(vec output_activations,
+                             vec y) {  // C(a) = 1/2 * (a - y)^2
+    return output_activations - y;
   }
 
   void update_mini_batch(
@@ -66,7 +72,8 @@ class network {
       activation.transform(sigmoid);
       activations.push_back(activation);
     }
-    vec delta = (activations.back() - y) % zs.back().transform(sigmoid_prime);
+    vec delta = cost_derivative(activations.back(), y) %
+                zs.back().transform(sigmoid_prime);
     nabla_b.back() = delta;
     nabla_w.back() = delta * activations[activations.size() - 2].t();
     for (int i = 2; i <= biases.size(); i++) {
@@ -108,7 +115,7 @@ class network {
            int mini_batch_size, double eta,
            const vector<pair<vec, int>>& test_data) {
     int n = training_data.size();
-    for (int epoch = 0; epoch <= epochs; epoch++) {
+    for (int epoch = 1; epoch <= epochs; epoch++) {
       shuffle(training_data.begin(), training_data.end(), rand);
       for (int i = 0; i + mini_batch_size <= n; i += mini_batch_size) {
         update_mini_batch(training_data.begin() + i,
